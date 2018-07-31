@@ -81,17 +81,24 @@ select_events(Display *dpy) {
 }
 
 static void
-putEvent(struct timeval *time, unsigned int mods, XIRawEvent *ev, KeySym keysym) {
-	char *str = XKeysymToString(keysym);
+putKeySym(KeySym k){
+	char *str = XKeysymToString(k);
+	if(str == NULL) {
+		printf("%ld", k);
+	} else {
+		fputs(str, stdout);
+	}
+}
+
+static void
+putEvent(struct timeval *time, unsigned int mods, XIRawEvent *ev, KeySym keysym, KeySym keysymNoMods) {
 	putTime(time);
 	printf("\t%02x\t%02x\t", mods, ev->detail);
 	fputs(ev->evtype == XI_RawKeyPress ? "press" : "release", stdout);
 	putchar('\t');
-	if(str == NULL) {
-		printf("%ld", keysym);
-	} else {
-		fputs(str, stdout);
-	}
+  putKeySym(keysym);
+	putchar('\t');
+  putKeySym(keysymNoMods);
 	putchar('\n');
 	fflush(stdout);
 }
@@ -117,6 +124,7 @@ logkeys(Display *dpy) {
 	struct timeval baseTime = {0}, time;
 	unsigned int mods = 0;
 	KeySym keysym = NoSymbol;
+	KeySym keysymNoMods = NoSymbol;
 
 	int xi_opcode = getXIOpcode(dpy);
 	if(!xi_opcode) return 1;
@@ -136,9 +144,11 @@ logkeys(Display *dpy) {
 		// translate into a keysym
 		XkbLookupKeySym(dpy, ev->detail, mods, NULL, &keysym);
 		if(keysym == NoSymbol) continue;
+		XkbLookupKeySym(dpy, ev->detail, 0, NULL, &keysymNoMods);
+		if(keysymNoMods == NoSymbol) continue;
 
 		// output
-		putEvent(&time, mods, ev, keysym);
+		putEvent(&time, mods, ev, keysym, keysymNoMods);
 
 		// update the state/modifiers
 		// FIXME support capslock, etc.
