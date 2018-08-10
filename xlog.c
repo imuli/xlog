@@ -1,6 +1,6 @@
-/* Logs X11 key events
+/* Logs X11 events
  * 
- * Attempts to resolve actual keysym,
+ * When logging keys, it attempts to resolve actual keysym,
  * currently with some limitations.
  *
  * Unlicensed

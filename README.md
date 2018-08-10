@@ -1,11 +1,14 @@
-## keystoke logging and analysis tools
+## x11 logging and analysis tools
 
-### xkeylog
+### xlog
 
-Logs X11 key events, includes
-time, modifiers, keycode, press/release, and keysym.
+Log X11 events with their time.
 
-Attempts to resolve actual keysym, currently with limitations around latching and locking modifiers and (probably) groups.
+* keys: records press/release, modifiers, keycode, and keysym.
+
+	Attempts to resolve actual keysym, currently with limitations around latching and locking modifiers and (probably) groups.
+
+* windows: records window id and name of currently focused window
 
 #### Motivation
 
@@ -20,6 +23,6 @@ Available keyloggers for X11 don't save the time, and generally don't do a good 
 Start at X startup with something like:
 
 ```bash
-xkeylog >> ~/.xkeylog &
+xlog -keys >> ~/.xkeylog &
 ```
 
