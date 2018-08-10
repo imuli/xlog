@@ -41,3 +41,8 @@ putstr_escaped(const char *s){
 		putchar_escaped(*s);
 }
 
+void
+putstr(const char *s){
+	fputs(s, stdout);
+}
+

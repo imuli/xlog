@@ -5,16 +5,6 @@
 
 #include "xlog.h"
 
-static void
-putKeySym(KeySym k){
-	char *str = XKeysymToString(k);
-	if(str == NULL) {
-		printf("%ld", k);
-	} else {
-		fputs(str, stdout);
-	}
-}
-
 // this is a constant once it's set for the first time
 static int xi_opcode = 0;
 static int
@@ -28,19 +18,6 @@ getXIOpcode(Display *dpy) {
 	}
 	// FIXME check for version 2
 	return 1;
-}
-
-static void
-putEvent(Time time, unsigned int mods, XIRawEvent *ev, KeySym keysym, KeySym keysymNoMods) {
-	putTime(time);
-	printf("\t%02x\t%02x\t", mods, ev->detail);
-	fputs(ev->evtype == XI_RawKeyPress ? "press" : "release", stdout);
-	putchar('\t');
-  putKeySym(keysym);
-	putchar('\t');
-  putKeySym(keysymNoMods);
-	putchar('\n');
-	fflush(stdout);
 }
 
 int
@@ -58,7 +35,17 @@ select_keys(Display *dpy, Window root) {
 	return 1;
 }
 
-static int mods;
+static void
+putKeySym(KeySym k){
+	char *str = XKeysymToString(k);
+	if(str == NULL) {
+		printf("%ld", k);
+	} else {
+		putstr(str);
+	}
+}
+
+static int mods = 0;
 
 void
 handleGenericEvent(Display *dpy, XGenericEventCookie *cookie) {
@@ -76,8 +63,15 @@ handleGenericEvent(Display *dpy, XGenericEventCookie *cookie) {
 	XkbLookupKeySym(dpy, ev->detail, 0, NULL, &keysymNoMods);
 	if(keysymNoMods == NoSymbol) return;
 
-	// output
-	putEvent(ev->time, mods, ev, keysym, keysymNoMods);
+	putTime(ev->time);
+	putchar('\t');
+	putstr(ev->evtype == XI_RawKeyPress ? "press" : "release");
+	printf("\t%02x\t%02x\t", mods, ev->detail);
+  putKeySym(keysym);
+	putchar('\t');
+  putKeySym(keysymNoMods);
+	putchar('\n');
+	fflush(stdout);
 
 	// update the state/modifiers
 	// FIXME support capslock, etc.
