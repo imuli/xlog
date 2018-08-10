@@ -8,6 +8,9 @@ static Atom WM_NAME;
 static Atom WINDOW;
 static Atom STRING;
 
+static Window activeWindow;
+static char *activeName;
+
 int
 select_windows(Display *dpy, Window root) {
 	if(!(WM_NAME = XInternAtom(dpy, "WM_NAME", True))){
@@ -69,51 +72,50 @@ getWindowName(Display *dpy, Window w){
 	return None;
 }
 
-static Window
-handleActiveWindowNameChange(Display *dpy, XPropertyEvent *ev, struct timeval *baseTime, Window w) {
+static void
+handleActiveWindowNameChange(Display *dpy, XPropertyEvent *ev, Window w) {
 	char *name = getWindowName(dpy, w);
-	struct timeval time;
 
-	// get the time (more or less) for the event
-	if(baseTime->tv_sec == 0)
-		getBaseTime(baseTime, ev->time);
-	addTime(baseTime, ev->time, &time);
+	if(activeWindow == w && eqstr(activeName, name)){
+		if(name) XFree(name);
+		return;
+	}
+	activeWindow = w;
 
-	putTime(&time);
-	printf("\twindow\t0x%08lx", w);
+	putTime(ev->time);
+	printf("\twindow\t0x%08lx", activeWindow);
 	if(name){
 		putchar('\t');
 		putstr_escaped(name);
-		XFree(name);
 	}
 	putchar('\n');
 	fflush(stdout);
 
-	return w;
+	if(activeName) XFree(activeName);
+	activeName = name;
 }
 
-static Window
-handleActiveWindowChange(Display *dpy, XPropertyEvent *ev, struct timeval *baseTime, Window oldWindow) {
+static void
+handleActiveWindowChange(Display *dpy, XPropertyEvent *ev) {
 	Window w = getActiveWindow(dpy);
-	if(w == oldWindow) return oldWindow;
+	if(w == activeWindow) return;
 
 	// switch which window we're listening for name change on
-	if(oldWindow) XSelectInput(dpy, oldWindow, None);
+	if(activeWindow) XSelectInput(dpy, activeWindow, None);
 	if(w) XSelectInput(dpy, w, PropertyChangeMask);
 	
-	return handleActiveWindowNameChange(dpy, ev, baseTime, w);
+	handleActiveWindowNameChange(dpy, ev, w);
 }
 
-Window
-handlePropertyNotify(Display *dpy, XPropertyEvent *ev, struct timeval *baseTime, Window activeWindow) {
+void
+handlePropertyNotify(Display *dpy, XPropertyEvent *ev) {
 	if(ev->atom == NET_ACTIVE_WINDOW) {
-		return handleActiveWindowChange(dpy, ev, baseTime, activeWindow);
+		handleActiveWindowChange(dpy, ev);
 	} else if(ev->atom == WM_NAME) {
-		return handleActiveWindowNameChange(dpy, ev, baseTime, activeWindow);
+		handleActiveWindowNameChange(dpy, ev, activeWindow);
 	} else {
 //		fputs(XGetAtomName(dpy, ev->atom), stdout);
 //		putchar('\n');
-		return activeWindow;
 	}
 }
 

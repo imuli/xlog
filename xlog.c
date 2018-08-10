@@ -51,24 +51,20 @@ select_events(Display *dpy, int options) {
 	return good;
 }
 
-static int
-logkeys(Display *dpy) {
+static void
+logevents(Display *dpy) {
 	XEvent event;
-	Window activeWindow = None;
-	struct timeval baseTime = {0};
-	unsigned int mods = 0;
-
 	while(1) {
 		XNextEvent(dpy, &event);
-	switch(event.type){ // Forever
-	case PropertyNotify:
-		activeWindow = handlePropertyNotify(dpy, (XPropertyEvent*)&event, &baseTime, activeWindow);
-		break;
-	case GenericEvent:
-		mods = handleGenericEvent(dpy, &event.xcookie, &baseTime, mods);
-		break;
-	} }
-	return 0;
+		switch(event.type){ // Forever
+		case PropertyNotify:
+			handlePropertyNotify(dpy, (XPropertyEvent*)&event);
+			break;
+		case GenericEvent:
+			handleGenericEvent(dpy, &event.xcookie);
+			break;
+		}
+	}
 }
 
 int
@@ -107,6 +103,7 @@ main(int argc, char *argv[]) {
 	XSetErrorHandler(errorHandler);
 #endif
 	if(!select_events(dpy, options)) return 1;
-	return logkeys(dpy);
+	logevents(dpy);
+	return 0;
 }
 

@@ -1,22 +1,19 @@
-#include <sys/time.h>
-
-// put.c
+// string.c
+int eqstr(const char *a, const char *b);
 void putchar_escaped(char c);
 void putstr_escaped(const char *s);
 void putstr(const char *s);
-void putKeySym(KeySym k);
-void putTime(struct timeval *tv);
 
+#ifdef _X11_XLIB_H_
 // time.c
-void addTime(struct timeval *base, Time t, struct timeval *out);
-void subTime(struct timeval *base, Time t, struct timeval *out);
-void getBaseTime(struct timeval *tv, Time t);
+void putTime(Time time);
 
 // keys.c
 int select_keys(Display *dpy, Window root);
-int handleGenericEvent(Display *dpy, XGenericEventCookie *cookie, struct timeval *baseTime, int mods);
+void handleGenericEvent(Display *dpy, XGenericEventCookie *cookie);
 
 // windows.c
 int select_windows(Display *dpy, Window root);
-Window handlePropertyNotify(Display *dpy, XPropertyEvent *ev, struct timeval *baseTime, Window activeWindow);
+void handlePropertyNotify(Display *dpy, XPropertyEvent *ev);
+#endif
 

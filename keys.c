@@ -5,6 +5,16 @@
 
 #include "xlog.h"
 
+static void
+putKeySym(KeySym k){
+	char *str = XKeysymToString(k);
+	if(str == NULL) {
+		printf("%ld", k);
+	} else {
+		fputs(str, stdout);
+	}
+}
+
 // this is a constant once it's set for the first time
 static int xi_opcode = 0;
 static int
@@ -21,7 +31,7 @@ getXIOpcode(Display *dpy) {
 }
 
 static void
-putEvent(struct timeval *time, unsigned int mods, XIRawEvent *ev, KeySym keysym, KeySym keysymNoMods) {
+putEvent(Time time, unsigned int mods, XIRawEvent *ev, KeySym keysym, KeySym keysymNoMods) {
 	putTime(time);
 	printf("\t%02x\t%02x\t", mods, ev->detail);
 	fputs(ev->evtype == XI_RawKeyPress ? "press" : "release", stdout);
@@ -48,36 +58,32 @@ select_keys(Display *dpy, Window root) {
 	return 1;
 }
 
-int
-handleGenericEvent(Display *dpy, XGenericEventCookie *cookie, struct timeval *baseTime, int mods) {
-	struct timeval time;
+static int mods;
+
+void
+handleGenericEvent(Display *dpy, XGenericEventCookie *cookie) {
 	KeySym keysym = NoSymbol;
 	KeySym keysymNoMods = NoSymbol;
 
-	if(!XGetEventData(dpy, cookie)) return mods;
-	if(cookie->type != GenericEvent) return mods;
-	if(cookie->extension != xi_opcode) return mods;
+	if(!XGetEventData(dpy, cookie)) return;
+	if(cookie->type != GenericEvent) return;
+	if(cookie->extension != xi_opcode) return;
 	XIRawEvent *ev = cookie->data;
-
-	// get the time (more or less) for the event
-	if(baseTime->tv_sec == 0)
-		getBaseTime(baseTime, ev->time);
-	addTime(baseTime, ev->time, &time);
 
 	// translate into a keysym
 	XkbLookupKeySym(dpy, ev->detail, mods, NULL, &keysym);
-	if(keysym == NoSymbol) return mods;
+	if(keysym == NoSymbol) return;
 	XkbLookupKeySym(dpy, ev->detail, 0, NULL, &keysymNoMods);
-	if(keysymNoMods == NoSymbol) return mods;
+	if(keysymNoMods == NoSymbol) return;
 
 	// output
-	putEvent(&time, mods, ev, keysym, keysymNoMods);
+	putEvent(ev->time, mods, ev, keysym, keysymNoMods);
 
 	// update the state/modifiers
 	// FIXME support capslock, etc.
 	if(ev->evtype == XI_RawKeyPress)
-		return mods | XkbKeysymToModifiers(dpy, keysym);
+		mods |= XkbKeysymToModifiers(dpy, keysym);
 	else
-		return mods & ~XkbKeysymToModifiers(dpy, keysym);
+		mods &= ~XkbKeysymToModifiers(dpy, keysym);
 }
 

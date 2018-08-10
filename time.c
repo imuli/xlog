@@ -1,6 +1,9 @@
+#include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
 #include <X11/Xlib.h>
+
+static struct timeval baseTime;
 
 void
 addTime(struct timeval *base, Time t, struct timeval *out) {
@@ -28,4 +31,21 @@ getBaseTime(struct timeval *tv, Time t) {
 	subTime(tv, t, tv);
 }
 
+void
+fromTime(struct timeval *time, Time t) {
+	if(baseTime.tv_sec == 0)
+		getBaseTime(&baseTime, t);
+	addTime(&baseTime, t, time);
+}
+
+void
+putTime(Time time) {
+	char buf[64];
+	struct timeval tv;
+	fromTime(&tv, time);
+	struct tm *gm = gmtime(&tv.tv_sec);
+	strftime(buf, sizeof(buf), "%Y-%m-%d_%H:%M:%S", gm);
+	fputs(buf, stdout);
+	printf(".%03ld", tv.tv_usec / 1000);
+}
 
