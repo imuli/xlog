@@ -1,13 +1,20 @@
-targets=bin $(patsubst %.c,bin/%,$(wildcard *.c))
+objects=$(patsubst %.c,build/%.o,$(wildcard *.c))
+targets=bin/xlog
 
 all: $(targets)
 
 bin:
 	mkdir bin
 
-bin/%: %.c | bin
-	cc -Os -Wall -lX11 -lXi -o $@ $<
+build:
+	mkdir build
+
+bin/xlog: $(objects) | bin
+	cc -Os -Wall -lX11 -lXi -o $@ $^
+
+build/%.o: %.c xlog.h | build
+	cc -c -Os -Wall -o $@ $<
 
 clean:
-	rm -rf $(targets)
+	rm -rf $(targets) bin build
 
