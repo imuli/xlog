@@ -23,9 +23,9 @@ usage(const char *argv0) {
 	fprintf(stderr, "\
 usage:  %s [-options ...]\n\
 where options include:\n\
-	-display name		X11 server to contact\n\
+	-display name	X11 server to contact (default from $DISPLAY)\n\
 	-keys		log keys\n\
-	-windows		log focused window name\n\
+	-windows	log focused window name\n\
 ", argv0);
 }
 
