@@ -7,6 +7,7 @@ static Atom NET_ACTIVE_WINDOW;
 static Atom WM_NAME;
 static Atom WINDOW;
 static Atom STRING;
+static Atom UTF8_STRING;
 
 static Window activeWindow;
 static char *activeName;
@@ -19,6 +20,10 @@ select_windows(Display *dpy, Window root) {
 	}
 	if(!(STRING = XInternAtom(dpy, "STRING", True))){
 		fprintf(stderr, "Cannot find STRING.\n");
+		return 0;
+	}
+	if(!(UTF8_STRING = XInternAtom(dpy, "UTF8_STRING", True))){
+		fprintf(stderr, "Cannot find UTF8_STRING.\n");
 		return 0;
 	}
 	if(!(WINDOW = XInternAtom(dpy, "WINDOW", True))){
@@ -64,12 +69,13 @@ getWindowName(Display *dpy, Window w){
 	unsigned long n_items;
 	unsigned long bytes_after;
 	unsigned char *name;
-	XGetWindowProperty(dpy, w, WM_NAME, 0, 1024, False, STRING,
+	XGetWindowProperty(dpy, w, WM_NAME, 0, 1024, False, AnyPropertyType,
 			&actual_type, &actual_format, &n_items, &bytes_after, &name);
-	if(actual_type == STRING){
-		return (char *)name;
+	if (actual_type == STRING || actual_type == UTF8_STRING) {
+			return (char *) name;
+	} else {
+			return None;
 	}
-	return None;
 }
 
 static void

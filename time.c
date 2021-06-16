@@ -44,7 +44,7 @@ putTime(Time time) {
 	struct timeval tv;
 	fromTime(&tv, time);
 	struct tm *gm = gmtime(&tv.tv_sec);
-	strftime(buf, sizeof(buf), "%Y-%m-%d_%H:%M:%S", gm);
+	strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", gm);
 	fputs(buf, stdout);
 	printf(".%03ld", tv.tv_usec / 1000);
 }
