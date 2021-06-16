@@ -3,42 +3,39 @@
 
 #include "xlog.h"
 
-static Atom NET_ACTIVE_WINDOW;
-static Atom WM_NAME;
-static Atom WINDOW;
+static Atom _NET_ACTIVE_WINDOW;
 static Atom STRING;
 static Atom UTF8_STRING;
+static Atom WINDOW;
+static Atom WM_NAME;
 
 static Window activeWindow;
 static char *activeName;
 
+static int
+getAtom(Display *dpy, Atom *atom, const char *name) {
+	Atom x = XInternAtom(dpy, name, True);
+	if (!x) {
+		fprintf(stderr, "Cannot find %s.\n", name);
+		return 0;
+	}
+	*atom = x;
+	return 1;
+}
+
 int
 select_windows(Display *dpy, Window root) {
-	if(!(WM_NAME = XInternAtom(dpy, "WM_NAME", True))){
-		fprintf(stderr, "Cannot find WM_NAME.\n");
-		return 0;
-	}
-	if(!(STRING = XInternAtom(dpy, "STRING", True))){
-		fprintf(stderr, "Cannot find STRING.\n");
-		return 0;
-	}
-	if(!(UTF8_STRING = XInternAtom(dpy, "UTF8_STRING", True))){
-		fprintf(stderr, "Cannot find UTF8_STRING.\n");
-		return 0;
-	}
-	if(!(WINDOW = XInternAtom(dpy, "WINDOW", True))){
-		fprintf(stderr, "Cannot find WINDOW.\n");
-		return 0;
-	}
-	if(!(NET_ACTIVE_WINDOW = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", True))){
-		fprintf(stderr, "Cannot find _NET_ACTIVE_WINDOW.\n");
-		return 0;
-	}
 	if(!XSelectInput(dpy, root, PropertyChangeMask)){;
 		fprintf(stderr, "Cannot select Property Change events on root window.\n");
 		return 0;
 	}
-	return 1;
+	return 1
+		&& getAtom(dpy, &_NET_ACTIVE_WINDOW, "_NET_ACTIVE_WINDOW")
+		&& getAtom(dpy, &STRING, "STRING")
+		&& getAtom(dpy, &UTF8_STRING, "UTF8_STRING")
+		&& getAtom(dpy, &WINDOW, "WINDOW")
+		&& getAtom(dpy, &WM_NAME, "WM_NAME")
+		;
 }
 
 static Window
@@ -50,7 +47,7 @@ getActiveWindow(Display *dpy){
 	unsigned long n_items;
 	unsigned long bytes_after;
 	unsigned char *rawWindow;
-	XGetWindowProperty(dpy, root, NET_ACTIVE_WINDOW, 0, 1, False, WINDOW,
+	XGetWindowProperty(dpy, root, _NET_ACTIVE_WINDOW, 0, 1, False, WINDOW,
 			&actual_type, &actual_format, &n_items, &bytes_after, &rawWindow);
 	if(actual_type == WINDOW){
 		active = *(Window*)rawWindow;
@@ -115,7 +112,7 @@ handleActiveWindowChange(Display *dpy, XPropertyEvent *ev) {
 
 void
 handlePropertyNotify(Display *dpy, XPropertyEvent *ev) {
-	if(ev->atom == NET_ACTIVE_WINDOW) {
+	if(ev->atom == _NET_ACTIVE_WINDOW) {
 		handleActiveWindowChange(dpy, ev);
 	} else if(ev->atom == WM_NAME) {
 		handleActiveWindowNameChange(dpy, ev, activeWindow);
